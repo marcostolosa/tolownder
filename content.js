@@ -2,7 +2,6 @@ console.log('Content script carregado');
 
 // Função para verificar se a URL é de uma imagem
 function isImageUrl(url) {
-  // Verifica extensões tradicionais ou URLs Base64 de imagens
   const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'];
   return (
     imageExtensions.some(ext => url.toLowerCase().endsWith(ext)) ||
@@ -10,18 +9,19 @@ function isImageUrl(url) {
   );
 }
 
-// Função para extrair URLs de mídia do DOM e contar imagens
+// Função para extrair URLs de mídia do DOM e contar imagens únicas
 function extractMediaUrls() {
   const urls = new Set();
   let imageCount = 0;
 
+  // Imagens via <img>
   document.querySelectorAll('img').forEach(img => {
-    if (img.src) {
+    if (img.src && isImageUrl(img.src)) {
       urls.add(img.src);
-      if (isImageUrl(img.src)) imageCount++;
     }
   });
 
+  // Vídeos e fontes via <video> e <source>
   document.querySelectorAll('video').forEach(video => {
     if (video.src) urls.add(video.src);
     video.querySelectorAll('source').forEach(source => {
@@ -29,19 +29,22 @@ function extractMediaUrls() {
     });
   });
 
+  // Imagens de fundo via CSS
   document.querySelectorAll('*').forEach(element => {
     const style = window.getComputedStyle(element);
     const bgImage = style.backgroundImage;
     if (bgImage && bgImage !== 'none' && bgImage.startsWith('url(')) {
       const url = bgImage.slice(4, -1).replace(/['"]/g, '');
-      if (url) {
+      if (url && isImageUrl(url)) {
         urls.add(url);
-        if (isImageUrl(url)) imageCount++;
       }
     }
   });
 
+  // Contar apenas imagens únicas que serão exibidas
+  imageCount = Array.from(urls).filter(url => isImageUrl(url)).length;
   chrome.runtime.sendMessage({ type: 'UPDATE_IMAGE_COUNT', count: imageCount });
+
   return Array.from(urls);
 }
 

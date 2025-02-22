@@ -14,53 +14,50 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      chrome.tabs.sendMessage(tabs[0].id, { type: 'GET_MEDIA' }, (response) => {
-        if (response && response.urls) {
-          populateMediaList(response.urls);
-        }
-      });
-  
-      chrome.runtime.sendMessage({ type: 'GET_ALL_MEDIA' }, (response) => {
-        if (response && response.urls) {
-          populateMediaList(response.urls);
-        }
+      const tabId = tabs[0].id;
+      chrome.tabs.sendMessage(tabId, { type: 'GET_MEDIA' }, (contentResponse) => {
+        chrome.runtime.sendMessage({ type: 'GET_ALL_MEDIA' }, (backgroundResponse) => {
+          const contentUrls = contentResponse && contentResponse.urls ? contentResponse.urls : [];
+          const backgroundUrls = backgroundResponse && backgroundResponse.urls ? backgroundResponse.urls : [];
+          const allUrls = [...new Set([...contentUrls, ...backgroundUrls])];
+          populateMediaList(allUrls.filter(url => isImageUrl(url)));
+        });
       });
     });
   
     function populateMediaList(urls) {
+      mediaList.innerHTML = '';
       urls.forEach(url => {
-        if (!document.querySelector(`li[data-url="${url}"]`)) {
-          const li = document.createElement('li');
-          li.dataset.url = url;
+        const li = document.createElement('li');
+        li.dataset.url = url;
   
-          if (isImageUrl(url)) {
-            const thumbnail = document.createElement('img');
-            thumbnail.className = 'thumbnail';
-            thumbnail.src = url;
-            thumbnail.alt = 'Miniatura';
-            li.appendChild(thumbnail);
-          }
-  
-          const urlSpan = document.createElement('span');
-          urlSpan.className = 'url';
-          urlSpan.textContent = url.slice(0, 30) + (url.length > 30 ? '...' : '');
-          li.appendChild(urlSpan);
-  
-          const downloadBtn = document.createElement('button');
-          downloadBtn.textContent = 'Download';
-          downloadBtn.onclick = () => downloadMedia(url, false);
-          li.appendChild(downloadBtn);
-  
-          if (isBase64Image(url)) {
-            const downloadJpgBtn = document.createElement('button');
-            downloadJpgBtn.textContent = 'As JPG';
-            downloadJpgBtn.className = 'secondary';
-            downloadJpgBtn.onclick = () => downloadMedia(url, true);
-            li.appendChild(downloadJpgBtn);
-          }
-  
-          mediaList.appendChild(li);
+        if (isImageUrl(url)) {
+          const thumbnail = document.createElement('img');
+          thumbnail.className = 'thumbnail';
+          thumbnail.src = url;
+          thumbnail.alt = 'Miniatura';
+          li.appendChild(thumbnail);
         }
+  
+        const urlSpan = document.createElement('span');
+        urlSpan.className = 'url';
+        urlSpan.textContent = url.slice(0, 30) + (url.length > 30 ? '...' : '');
+        li.appendChild(urlSpan);
+  
+        const downloadBtn = document.createElement('button');
+        downloadBtn.textContent = 'Download';
+        downloadBtn.onclick = () => downloadMedia(url, false);
+        li.appendChild(downloadBtn);
+  
+        if (isBase64Image(url)) {
+          const downloadJpgBtn = document.createElement('button');
+          downloadJpgBtn.textContent = 'As JPG';
+          downloadJpgBtn.className = 'secondary';
+          downloadJpgBtn.onclick = () => downloadMedia(url, true);
+          li.appendChild(downloadJpgBtn);
+        }
+  
+        mediaList.appendChild(li);
       });
     }
   

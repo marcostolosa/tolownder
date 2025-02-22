@@ -1,19 +1,14 @@
-// Conjunto para armazenar URLs de mídia
 let mediaUrls = new Set();
 
 function isMediaUrl(url) {
-  const mediaExtensions = [
-    '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp',
-    '.mp4', '.webm', '.ogg', '.m3u8', '.mpd'
-  ];
-  return mediaExtensions.some(ext => url.toLowerCase().endsWith(ext));
+  const mediaExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.mp4', '.webm', '.ogg', '.m3u8', '.mpd'];
+  return mediaExtensions.some(ext => url.toLowerCase().endsWith(ext)) || url.startsWith('data:image/');
 }
 
-// Registrar listeners no início do service worker
 chrome.webRequest.onBeforeRequest.addListener(
   (details) => {
     const url = details.url;
-    if (isMediaUrl(url) && details.tabId >= 0) { // Verificar se tabId é válido
+    if (isMediaUrl(url) && details.tabId >= 0) {
       mediaUrls.add(url);
       chrome.tabs.sendMessage(details.tabId, { type: 'NEW_MEDIA', url });
     }
@@ -22,7 +17,7 @@ chrome.webRequest.onBeforeRequest.addListener(
 );
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  if (changeInfo.status === 'loading' && tabId >= 0) { // Verificar se tabId é válido
+  if (changeInfo.status === 'loading' && tabId >= 0) {
     mediaUrls.clear();
     chrome.tabs.sendMessage(tabId, { type: 'CLEAR_MEDIA' });
     chrome.action.setBadgeText({ text: '', tabId: tabId });
@@ -36,5 +31,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     const count = message.count.toString();
     chrome.action.setBadgeText({ text: count, tabId: sender.tab.id });
     chrome.action.setBadgeBackgroundColor({ color: '#FF0000', tabId: sender.tab.id });
+  } else if (message.type === 'MEDIA_URLS') {
+    message.urls.forEach(url => mediaUrls.add(url));
   }
 });

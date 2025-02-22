@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <title>Tolownder Pro</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+      width: 350px;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f7;
+      color: #1d1d1f;
+      box-sizing: border-box;
+    }
+    h2 {
+      font-size: 20px;
+      font-weight: 600;
+      margin: 0 0 15px;
+      color: #000;
+      letter-spacing: 0.5px;
+    }
+    ul {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    li {
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      background-color: #ffffff;
+      border-radius: 10px;
+      margin-bottom: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      transition: transform 0.2s ease;
+    }
+    li:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+    .thumbnail {
+      width: 40px;
+      height: 40px;
+      object-fit: cover;
+      border-radius: 6px;
+      margin-right: 12px;
+    }
+    .url {
+      flex: 1;
+      font-size: 14px;
+      color: #6e6e73;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    button {
+      font-size: 13px;
+      font-weight: 500;
+      padding: 6px 12px;
+      margin-left: 8px;
+      border: none;
+      border-radius: 8px;
+      background-color: #0071e3;
+      color: #ffffff;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+    button:hover {
+      background-color: #005bb5;
+    }
+    button.secondary {
+      background-color: #e8ecef;
+      color: #1d1d1f;
+    }
+    button.secondary:hover {
+      background-color: #d1d5da;
+    }
+    #download-all {
+      width: 100%;
+      padding: 10px;
+      margin-top: 15px;
+      font-size: 16px;
+      font-weight: 600;
+      background-color: #000000;
+      border-radius: 12px;
+      transition: background-color 0.2s ease;
+    }
+    #download-all:hover {
+      background-color: #333333;
+    }
+  </style>
+</head>
+<body>
+  <h2>Tolownder Pro</h2>
+  <ul id="media-list"></ul>
+  <button id="download-all">Download All</button>
+  <script src="popup.js"></script>
+</body>
+</html>

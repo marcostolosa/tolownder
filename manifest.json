@@ -1,0 +1,38 @@
+{
+    "manifest_version": 3,
+    "name": "Tolownder Pro",
+    "version": "1.0",
+    "description": "Descobre e baixa imagens e vídeos de qualquer página web com suporte avançado a streams e conteúdo dinâmico.",
+    "permissions": [
+      "activeTab",
+      "webRequest",
+      "downloads",
+      "storage"
+    ],
+    "host_permissions": [
+      "<all_urls>"
+    ],
+    "background": {
+      "service_worker": "background.js"
+    },
+    "content_scripts": [
+      {
+        "matches": ["<all_urls>"],
+        "js": ["content.js"],
+        "all_frames": true
+      }
+    ],
+    "action": {
+      "default_popup": "popup.html",
+      "default_icon": {
+        "16": "icons/icon16.png",
+        "48": "icons/icon48.png",
+        "128": "icons/icon128.png"
+      }
+    },
+    "icons": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  }

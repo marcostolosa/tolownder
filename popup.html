@@ -1,101 +1,120 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+  <meta charset="UTF-8">
+  <!-- Meta tag reforçada para permitir data URLs, imagens externas e scripts próprios -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; object-src 'self'; img-src 'self' http: https: data:;">
   <title>Tolownder Pro</title>
   <style>
+    :root {
+      --bg-color: #121212;
+      --card-bg: #1e1e1e;
+      --text-color: #e0e0e0;
+      --accent-color: #00e5ff;
+      --error-color: #ff1744;
+      --card-border: 2px solid var(--accent-color);
+    }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
-      width: 350px;
       margin: 0;
       padding: 20px;
-      background-color: #f5f5f7;
-      color: #1d1d1f;
-      box-sizing: border-box;
+      font-family: 'Roboto', sans-serif;
+      background: linear-gradient(135deg, #121212, #1a1a1a);
+      color: var(--text-color);
     }
     h2 {
-      font-size: 20px;
-      font-weight: 600;
-      margin: 0 0 15px;
-      color: #000;
-      letter-spacing: 0.5px;
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 24px;
+      font-weight: 700;
     }
-    ul {
-      list-style-type: none;
-      padding: 0;
-      margin: 0;
-      max-height: 400px;
-      overflow-y: auto;
+    #media-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 15px;
     }
-    li {
-      display: flex;
-      align-items: center;
-      padding: 10px;
-      background-color: #ffffff;
+    .media-card {
+      background: var(--card-bg);
       border-radius: 10px;
-      margin-bottom: 8px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-      transition: transform 0.2s ease;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
+      transition: transform 0.2s;
     }
-    li:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    .media-card:hover {
+      transform: scale(1.05);
     }
+    /* Miniaturas padronizadas em 60x60 */
     .thumbnail {
-      width: 40px;
-      height: 40px;
+      width: 60px !important;
+      height: 60px !important;
       object-fit: cover;
       border-radius: 6px;
-      margin-right: 12px;
+      margin-bottom: 8px;
+      border: var(--card-border);
     }
-    .url {
-      flex: 1;
-      font-size: 14px;
-      color: #6e6e73;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+    .media-url {
+      font-size: 10px;
+      text-align: center;
+      word-break: break-all;
+      margin-bottom: 8px;
+      color: var(--accent-color);
     }
-    button {
-      font-size: 13px;
-      font-weight: 500;
-      padding: 6px 12px;
-      margin-left: 8px;
+    .button-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 4px;
+    }
+    .download-btn {
+      background: var(--accent-color);
       border: none;
-      border-radius: 8px;
-      background-color: #0071e3;
-      color: #ffffff;
+      padding: 4px 6px;
+      border-radius: 5px;
+      color: var(--bg-color);
       cursor: pointer;
-      transition: background-color 0.2s ease;
+      font-size: 10px;
+      transition: background 0.2s;
     }
-    button:hover {
-      background-color: #005bb5;
-    }
-    button.secondary {
-      background-color: #e8ecef;
-      color: #1d1d1f;
-    }
-    button.secondary:hover {
-      background-color: #d1d5da;
+    .download-btn:hover {
+      background: #00b8d4;
     }
     #download-all {
+      margin-top: 20px;
       width: 100%;
       padding: 10px;
-      margin-top: 15px;
       font-size: 16px;
-      font-weight: 600;
-      background-color: #000000;
-      border-radius: 12px;
-      transition: background-color 0.2s ease;
+      background: var(--accent-color);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--bg-color);
+      transition: background 0.2s;
     }
     #download-all:hover {
-      background-color: #333333;
+      background: #00b8d4;
+    }
+    #error-container {
+      margin-top: 20px;
+      background: #2e2e2e;
+      border-radius: 8px;
+      padding: 10px;
+      max-height: 100px;
+      overflow-y: auto;
+      font-size: 12px;
+      color: var(--error-color);
+    }
+    .error-item {
+      margin-bottom: 5px;
     }
   </style>
 </head>
 <body>
   <h2>Tolownder Pro</h2>
-  <ul id="media-list"></ul>
+  <div id="media-container"></div>
   <button id="download-all">Download All</button>
+  <div id="error-container"></div>
   <script src="popup.js"></script>
 </body>
 </html>

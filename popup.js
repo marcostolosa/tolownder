@@ -1,21 +1,28 @@
 document.addEventListener('DOMContentLoaded', async () => {
-    const mediaList = document.getElementById('media-list');
+    const mediaContainer = document.getElementById('media-container');
+    const errorContainer = document.getElementById('error-container');
   
-    // Verifica se a URL é de imagem
+    // Função para logar erros na área de erros do popup
+    function logError(message) {
+      const errorItem = document.createElement('div');
+      errorItem.className = 'error-item';
+      errorItem.textContent = message;
+      errorContainer.appendChild(errorItem);
+    }
+  
+    // Verifica se a URL é de imagem (inclui base64)
     function isImageUrl(url) {
       const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'];
-      return (
-        imageExtensions.some(ext => url.toLowerCase().endsWith(ext)) ||
-        url.startsWith('data:image/')
-      );
+      return imageExtensions.some(ext => url.toLowerCase().endsWith(ext)) || url.startsWith('data:image/');
     }
   
-    // Verifica se a imagem está em formato base64
-    function isBase64Image(url) {
-      return url.startsWith('data:image/');
+    // Verifica se é um vídeo
+    function isVideoUrl(url) {
+      const videoExtensions = ['.mp4', '.webm', '.ogg'];
+      return videoExtensions.some(ext => url.toLowerCase().endsWith(ext));
     }
   
-    // Função assíncrona para obter as URLs de mídia via messaging
+    // Obtém URLs de mídia via mensagens dos scripts content e background
     async function getMediaUrls() {
       try {
         const tabs = await new Promise(resolve =>
@@ -30,91 +37,58 @@ document.addEventListener('DOMContentLoaded', async () => {
         );
         const contentUrls = (contentResponse && contentResponse.urls) || [];
         const backgroundUrls = (backgroundResponse && backgroundResponse.urls) || [];
-        const allUrls = [...new Set([...contentUrls, ...backgroundUrls])].filter(url => isImageUrl(url));
-        return allUrls;
+        return [...new Set([...contentUrls, ...backgroundUrls])];
       } catch (error) {
-        console.error("Erro ao obter URLs de mídia:", error);
+        logError("Erro ao obter URLs de mídia: " + error);
         return [];
       }
     }
   
-    // Atualiza a listagem de mídia no popup
-    function populateMediaList(urls) {
-      mediaList.innerHTML = '';
-      urls.forEach(url => {
-        const li = document.createElement('li');
-        li.dataset.url = url;
-  
-        if (isImageUrl(url)) {
-          const thumbnail = document.createElement('img');
-          thumbnail.className = 'thumbnail';
-          thumbnail.src = url;
-          thumbnail.alt = 'Miniatura';
-          li.appendChild(thumbnail);
-        }
-  
-        const urlSpan = document.createElement('span');
-        urlSpan.className = 'url';
-        urlSpan.textContent = url.slice(0, 30) + (url.length > 30 ? '...' : '');
-        li.appendChild(urlSpan);
-  
-        const downloadBtn = document.createElement('button');
-        downloadBtn.textContent = 'Download';
-        downloadBtn.onclick = () => downloadMedia(url, false);
-        li.appendChild(downloadBtn);
-  
-        if (isBase64Image(url)) {
-          const downloadJpgBtn = document.createElement('button');
-          downloadJpgBtn.textContent = 'As JPG';
-          downloadJpgBtn.className = 'secondary';
-          downloadJpgBtn.onclick = () => downloadMedia(url, true);
-          li.appendChild(downloadJpgBtn);
-        }
-  
-        mediaList.appendChild(li);
-      });
-    }
-  
-    // Inicializa a listagem de mídia
-    async function init() {
-      const urls = await getMediaUrls();
-      populateMediaList(urls);
-    }
-  
-    // Função para download de mídia com conversão opcional
-    function downloadMedia(url, convertToJpg = false) {
-      if (convertToJpg && isBase64Image(url)) {
+    // Função de download com opção de conversão para JPG ou PNG
+    // format: "original", "jpeg" ou "png"
+    function downloadMedia(url, format = "original") {
+      if (format === "original") {
+        chrome.downloads.download({ url }, (downloadId) => {
+          if (chrome.runtime.lastError) {
+            logError("Erro no download: " + chrome.runtime.lastError.message);
+          }
+        });
+      } else {
         const img = new Image();
+        img.crossOrigin = "anonymous"; // Tenta evitar problemas de CORS
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          canvas.width = img.width;
-          canvas.height = img.height;
+          canvas.width = img.naturalWidth;
+          canvas.height = img.naturalHeight;
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0);
-          const jpgDataUrl = canvas.toDataURL('image/jpeg', 0.9);
-          const blob = dataURLtoBlob(jpgDataUrl);
+          let mimeType = "image/jpeg";
+          let ext = "jpg";
+          if (format === "png") {
+            mimeType = "image/png";
+            ext = "png";
+          }
+          const dataUrl = canvas.toDataURL(mimeType, 0.9);
+          const blob = dataURLtoBlob(dataUrl);
           const blobUrl = URL.createObjectURL(blob);
           chrome.downloads.download({
             url: blobUrl,
-            filename: 'image.jpg'
+            filename: `image.${ext}`
           }, () => {
             if (chrome.runtime.lastError) {
-              console.error("Erro no download:", chrome.runtime.lastError);
+              logError("Erro no download: " + chrome.runtime.lastError.message);
             }
             URL.revokeObjectURL(blobUrl);
           });
         };
+        img.onerror = () => {
+          logError("Erro ao carregar imagem para conversão: " + url);
+        };
         img.src = url;
-      } else {
-        chrome.downloads.download({ url }, (downloadId) => {
-          if (chrome.runtime.lastError) {
-            console.error("Erro no download:", chrome.runtime.lastError);
-          }
-        });
       }
     }
   
-    // Converte dataURL para Blob
+    // Converte data URL para Blob
     function dataURLtoBlob(dataUrl) {
       const [header, data] = dataUrl.split(',');
       const mime = header.match(/:(.*?);/)[1];
@@ -126,17 +100,87 @@ document.addEventListener('DOMContentLoaded', async () => {
       return new Blob([array], { type: mime });
     }
   
-    // Inicializa a interface
-    init();
+    // Cria o card para cada mídia
+    function createMediaCard(url) {
+      const card = document.createElement('div');
+      card.className = 'media-card';
   
-    // Botão para download de todos os itens
-    document.getElementById('download-all').onclick = async () => {
-      try {
-        const urls = await getMediaUrls();
-        urls.forEach(url => downloadMedia(url, false));
-      } catch (error) {
-        console.error("Erro ao baixar todas as mídias:", error);
+      let mediaElement;
+      if (isImageUrl(url)) {
+        mediaElement = document.createElement('img');
+        mediaElement.src = url;
+      } else if (isVideoUrl(url)) {
+        mediaElement = document.createElement('video');
+        mediaElement.src = url;
+        mediaElement.controls = true;
+      } else {
+        // Tenta renderizar como imagem por padrão
+        mediaElement = document.createElement('img');
+        mediaElement.src = url;
       }
+      mediaElement.className = 'thumbnail';
+      // Atributos HTML para forçar o tamanho fixo de 60x60
+      mediaElement.width = 60;
+      mediaElement.height = 60;
+      mediaElement.onerror = () => {
+        logError("Erro ao carregar: " + url);
+      };
+      card.appendChild(mediaElement);
+  
+      // Exibe o link completo da mídia
+      const urlText = document.createElement('div');
+      urlText.className = 'media-url';
+      urlText.textContent = url;
+      card.appendChild(urlText);
+  
+      // Cria um container para os botões de download
+      const btnContainer = document.createElement('div');
+      btnContainer.className = 'button-container';
+  
+      // Botão para baixar o arquivo original
+      const btnOriginal = document.createElement('button');
+      btnOriginal.className = 'download-btn';
+      btnOriginal.textContent = 'Original';
+      btnOriginal.onclick = () => downloadMedia(url, "original");
+      btnContainer.appendChild(btnOriginal);
+  
+      // Se for imagem, adiciona as opções de conversão para JPG e PNG
+      if (isImageUrl(url)) {
+        const btnJpg = document.createElement('button');
+        btnJpg.className = 'download-btn';
+        btnJpg.textContent = 'JPG';
+        btnJpg.onclick = () => downloadMedia(url, "jpeg");
+        btnContainer.appendChild(btnJpg);
+  
+        const btnPng = document.createElement('button');
+        btnPng.className = 'download-btn';
+        btnPng.textContent = 'PNG';
+        btnPng.onclick = () => downloadMedia(url, "png");
+        btnContainer.appendChild(btnPng);
+      }
+      card.appendChild(btnContainer);
+      return card;
+    }
+  
+    // Popula o container com os cards de mídia
+    async function populateMedia() {
+      const urls = await getMediaUrls();
+      mediaContainer.innerHTML = '';
+      if (urls.length === 0) {
+        mediaContainer.textContent = "Nenhuma mídia encontrada.";
+      }
+      urls.forEach(url => {
+        const card = createMediaCard(url);
+        mediaContainer.appendChild(card);
+      });
+    }
+  
+    // Botão para download de todos os itens (usando a opção "original")
+    document.getElementById('download-all').onclick = async () => {
+      const urls = await getMediaUrls();
+      urls.forEach(url => downloadMedia(url, "original"));
     };
+  
+    populateMedia();
   });
   

@@ -1,6 +1,7 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const mediaList = document.getElementById('media-list');
   
+    // Verifica se a URL é de imagem
     function isImageUrl(url) {
       const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'];
       return (
@@ -9,22 +10,35 @@ document.addEventListener('DOMContentLoaded', () => {
       );
     }
   
+    // Verifica se a imagem está em formato base64
     function isBase64Image(url) {
       return url.startsWith('data:image/');
     }
   
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      const tabId = tabs[0].id;
-      chrome.tabs.sendMessage(tabId, { type: 'GET_MEDIA' }, (contentResponse) => {
-        chrome.runtime.sendMessage({ type: 'GET_ALL_MEDIA' }, (backgroundResponse) => {
-          const contentUrls = contentResponse && contentResponse.urls ? contentResponse.urls : [];
-          const backgroundUrls = backgroundResponse && backgroundResponse.urls ? backgroundResponse.urls : [];
-          const allUrls = [...new Set([...contentUrls, ...backgroundUrls])];
-          populateMediaList(allUrls.filter(url => isImageUrl(url)));
-        });
-      });
-    });
+    // Função assíncrona para obter as URLs de mídia via messaging
+    async function getMediaUrls() {
+      try {
+        const tabs = await new Promise(resolve =>
+          chrome.tabs.query({ active: true, currentWindow: true }, resolve)
+        );
+        const tabId = tabs[0].id;
+        const contentResponse = await new Promise(resolve =>
+          chrome.tabs.sendMessage(tabId, { type: 'GET_MEDIA' }, resolve)
+        );
+        const backgroundResponse = await new Promise(resolve =>
+          chrome.runtime.sendMessage({ type: 'GET_ALL_MEDIA' }, resolve)
+        );
+        const contentUrls = (contentResponse && contentResponse.urls) || [];
+        const backgroundUrls = (backgroundResponse && backgroundResponse.urls) || [];
+        const allUrls = [...new Set([...contentUrls, ...backgroundUrls])].filter(url => isImageUrl(url));
+        return allUrls;
+      } catch (error) {
+        console.error("Erro ao obter URLs de mídia:", error);
+        return [];
+      }
+    }
   
+    // Atualiza a listagem de mídia no popup
     function populateMediaList(urls) {
       mediaList.innerHTML = '';
       urls.forEach(url => {
@@ -61,6 +75,13 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
   
+    // Inicializa a listagem de mídia
+    async function init() {
+      const urls = await getMediaUrls();
+      populateMediaList(urls);
+    }
+  
+    // Função para download de mídia com conversão opcional
     function downloadMedia(url, convertToJpg = false) {
       if (convertToJpg && isBase64Image(url)) {
         const img = new Image();
@@ -77,6 +98,9 @@ document.addEventListener('DOMContentLoaded', () => {
             url: blobUrl,
             filename: 'image.jpg'
           }, () => {
+            if (chrome.runtime.lastError) {
+              console.error("Erro no download:", chrome.runtime.lastError);
+            }
             URL.revokeObjectURL(blobUrl);
           });
         };
@@ -84,12 +108,13 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         chrome.downloads.download({ url }, (downloadId) => {
           if (chrome.runtime.lastError) {
-            console.error(chrome.runtime.lastError);
+            console.error("Erro no download:", chrome.runtime.lastError);
           }
         });
       }
     }
   
+    // Converte dataURL para Blob
     function dataURLtoBlob(dataUrl) {
       const [header, data] = dataUrl.split(',');
       const mime = header.match(/:(.*?);/)[1];
@@ -101,18 +126,17 @@ document.addEventListener('DOMContentLoaded', () => {
       return new Blob([array], { type: mime });
     }
   
-    document.getElementById('download-all').onclick = () => {
-      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        chrome.tabs.sendMessage(tabs[0].id, { type: 'GET_MEDIA' }, (response) => {
-          if (response && response.urls) {
-            response.urls.forEach(url => downloadMedia(url, false));
-          }
-        });
-        chrome.runtime.sendMessage({ type: 'GET_ALL_MEDIA' }, (response) => {
-          if (response && response.urls) {
-            response.urls.forEach(url => downloadMedia(url, false));
-          }
-        });
-      });
+    // Inicializa a interface
+    init();
+  
+    // Botão para download de todos os itens
+    document.getElementById('download-all').onclick = async () => {
+      try {
+        const urls = await getMediaUrls();
+        urls.forEach(url => downloadMedia(url, false));
+      } catch (error) {
+        console.error("Erro ao baixar todas as mídias:", error);
+      }
     };
   });
+  

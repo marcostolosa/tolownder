@@ -1,6 +1,6 @@
 console.log('Content script carregado');
 
-// Função para verificar se a URL é de uma imagem
+// Verifica se a URL é de imagem
 function isImageUrl(url) {
   const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'];
   return (
@@ -9,7 +9,18 @@ function isImageUrl(url) {
   );
 }
 
-// Função para extrair URLs de mídia do DOM e contar imagens únicas
+// Extrai múltiplas URLs de propriedades CSS (ex.: background-image com mais de uma imagem)
+function extractUrlsFromCSS(bgImage) {
+  const urls = [];
+  const regex = /url\((['"]?)(.*?)\1\)/g;
+  let match;
+  while ((match = regex.exec(bgImage)) !== null) {
+    urls.push(match[2]);
+  }
+  return urls;
+}
+
+// Extrai URLs de mídia do DOM e atualiza a contagem de imagens únicas
 function extractMediaUrls() {
   const urls = new Set();
   let imageCount = 0;
@@ -29,41 +40,54 @@ function extractMediaUrls() {
     });
   });
 
-  // Imagens de fundo via CSS
+  // Imagens de fundo via CSS (suporta múltiplas URLs)
   document.querySelectorAll('*').forEach(element => {
     const style = window.getComputedStyle(element);
     const bgImage = style.backgroundImage;
-    if (bgImage && bgImage !== 'none' && bgImage.startsWith('url(')) {
-      const url = bgImage.slice(4, -1).replace(/['"]/g, '');
-      if (url && isImageUrl(url)) {
-        urls.add(url);
-      }
+    if (bgImage && bgImage !== 'none') {
+      const extractedUrls = extractUrlsFromCSS(bgImage);
+      extractedUrls.forEach(url => {
+        if (url && isImageUrl(url)) {
+          urls.add(url);
+        }
+      });
     }
   });
 
-  // Contar apenas imagens únicas que serão exibidas
+  // Atualiza a contagem de imagens únicas
   imageCount = Array.from(urls).filter(url => isImageUrl(url)).length;
   chrome.runtime.sendMessage({ type: 'UPDATE_IMAGE_COUNT', count: imageCount });
 
   return Array.from(urls);
 }
 
-// Enviar URLs ao background e popup
+// Envia as URLs extraídas para o background e popup
 function sendMediaUrls() {
   const urls = extractMediaUrls();
   chrome.runtime.sendMessage({ type: 'MEDIA_URLS', urls });
 }
 
-// Executar análise inicial
+// Execução inicial da extração de mídia
 sendMediaUrls();
 
-// Observar mudanças no DOM
+// Função debounce para otimizar a execução da análise em mudanças do DOM
+function debounce(func, wait) {
+  let timeout;
+  return function(...args) {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(this, args), wait);
+  };
+}
+
+const debouncedSendMediaUrls = debounce(sendMediaUrls, 500);
+
+// Observa alterações no DOM para atualizar as URLs de mídia de forma otimizada
 const observer = new MutationObserver(() => {
-  sendMediaUrls();
+  debouncedSendMediaUrls();
 });
 observer.observe(document.body, { childList: true, subtree: true });
 
-// Receber mensagens
+// Recebe mensagens do background ou popup
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'NEW_MEDIA') {
     sendMediaUrls();

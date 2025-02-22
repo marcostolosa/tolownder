@@ -81,11 +81,6 @@ A extensão é composta por cinco arquivos principais:
 - Para imagens Base64 (ex.: SVG), clique em "As JPG" para convertê-las para JPG.
 - **Baixar Tudo**: Clique em "Download All" para baixar todas as imagens listadas.
 
-## Exemplos de Uso
-- **LinkedIn**: Detecta imagens de perfil, posts e fundos CSS.
-- **YouTube**: Captura thumbnails de vídeos (via DOM e rede).
-- **Sites com Base64**: Exibe e converte imagens embutidas como SVGs para JPG.
-
 ## Requisitos
 - Google Chrome (versão compatível com `manifest_version: 3`).
 - Permissões de acesso a todas as URLs (`<all_urls>`).

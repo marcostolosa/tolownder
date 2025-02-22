@@ -1,19 +1,19 @@
-# Tolownder Pro
+# Tolownder Pro 🚀
 
-**Tolownder Pro** é uma extensão para o Google Chrome que permite detectar e baixar imagens e vídeos de qualquer página da web com facilidade. 
+**Tolownder Pro** é uma extensão para o Google Chrome que permite detectar e baixar imagens e vídeos de qualquer página da web com facilidade.
 
-## Recursos Principais
+## 🌟 Recursos Principais
 
-- **Detecção Avançada de Mídia**: Extrai URLs de imagens e vídeos do DOM (elementos `<img>`, `<video>`, `<source>`), estilos CSS (`background-image`) e requisições de rede (`webRequest`).
-- **Contagem no Ícone**: Exibe o número total de imagens detectadas na página diretamente no ícone da extensão via badge.
-- **Interface Premium**: Popup elegante com miniaturas, URLs e opções de download, projetado com um estilo refinado.
-- **Suporte a Base64**: Identifica imagens embutidas (ex.: `data:image/svg+xml`), exibe miniaturas e permite conversão para JPG ao baixar.
-- **Download Flexível**: Baixe arquivos individualmente ou em massa com o botão "Download All".
-- **Monitoramento Dinâmico**: Detecta mídia adicionada após o carregamento inicial da página com `MutationObserver`.
+- **🔍 Detecção Avançada de Mídia**: Extrai URLs de imagens e vídeos do DOM (elementos `<img>`, `<video>`, `<source>`), estilos CSS (`background-image`) e requisições de rede (`webRequest`).
+- **📊 Contagem no Ícone**: Exibe o número total de imagens detectadas na página diretamente no ícone da extensão via badge.
+- **💎 Interface Premium**: Popup elegante com miniaturas, URLs e opções de download, projetado com um estilo refinado.
+- **🖼️ Suporte a Base64**: Identifica imagens embutidas (ex.: `data:image/svg+xml`), exibe miniaturas e permite conversão para JPG ao baixar.
+- **📥 Download Flexível**: Baixe arquivos individualmente ou em massa com o botão "Download All".
+- **🔄 Monitoramento Dinâmico**: Detecta mídia adicionada após o carregamento inicial da página com `MutationObserver`.
 
-## Como Funciona
+## 🛠️ Como Funciona
 
-### Estrutura da Extensão
+### 📂 Estrutura da Extensão
 A extensão é composta por cinco arquivos principais:
 
 1. **`manifest.json`**:
@@ -37,7 +37,7 @@ A extensão é composta por cinco arquivos principais:
    - Gerencia o popup, combinando URLs do `content.js` e `background.js`, exibindo apenas imagens únicas.
    - Oferece opções de download normal e conversão de imagens Base64 para JPG usando `<canvas>`.
 
-### Fluxo de Funcionamento
+### 🔄 Fluxo de Funcionamento
 1. **Ao carregar uma página**:
    - O `content.js` analisa o DOM inicial e envia URLs de mídia ao `background.js`.
    - O `background.js` escuta requisições de rede e adiciona URLs adicionais detectadas.
@@ -55,11 +55,13 @@ A extensão é composta por cinco arquivos principais:
    - Botão "As JPG": Converte imagens Base64 para JPG usando `<canvas>` e baixa como Blob.
    - Botão "Download All": Baixa todas as URLs listadas em sequência.
 
-## Instalação
+## 📥 Instalação
 
 1. **Clone o Repositório**:
-- git clone https://github.com/marcostolosa/tolownder.git
-- cd tolownder
+   ```sh
+   git clone https://github.com/marcostolosa/tolownder.git
+   cd tolownder
+   ```
 
 2. **Carregue no Chrome**:
 - Abra o Chrome e vá para `chrome://extensions/`.
@@ -72,7 +74,7 @@ A extensão é composta por cinco arquivos principais:
 4. **Teste**:
 - Navegue até uma página com imagens ou vídeos (ex.: LinkedIn, YouTube) e clique no ícone da extensão para abrir o popup.
 
-## Uso
+## 🚀 Uso
 
 - **Contagem no Ícone**: Ao visitar uma página, o número no ícone (badge vermelho) indica quantas imagens foram detectadas.
 - **Abrir o Popup**: Clique no ícone da extensão para ver a lista de imagens com miniaturas.
@@ -81,11 +83,11 @@ A extensão é composta por cinco arquivos principais:
 - Para imagens Base64 (ex.: SVG), clique em "As JPG" para convertê-las para JPG.
 - **Baixar Tudo**: Clique em "Download All" para baixar todas as imagens listadas.
 
-## Requisitos
+## 📋 Requisitos
 - Google Chrome (versão compatível com `manifest_version: 3`).
 - Permissões de acesso a todas as URLs (`<all_urls>`).
 
-## Contribuição
+## 🤝 Contribuição
 Sinta-se à vontade para abrir issues ou pull requests no repositório. 
 
 ---
